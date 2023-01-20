@@ -1,0 +1,53 @@
+name: jekyll-cd
+
+on:
+  push:
+    branches: ["main"]
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+
+    runs-on: self-hosted
+
+    steps:
+      - name: 🛎 Check out master
+        uses: actions/checkout@master
+        with:
+          fetch-depth: 1
+      - name: 🎩 Install Jekyll
+        run: |
+           gem install bundler jekyll
+           bundle install
+      - name: 🧹 Clean site
+        run: |
+          if [ -d "docs" ]; then
+            rm -rf docs/*
+          fi
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v2
+      - name: 🔨 Build site
+        run: bundle exec jekyll build -d docs
+        env:
+          JEKYLL_ENV: production
+      - name: Create version file
+        # add GitHub action job name and build number to version file
+        run: echo ${{ github.job }} ${{ github.run_number }}" > _site/_gh_pages/version.txt
+      - name: Download artifact
+        uses: actions/download-pages-artifact@v1
+      - name: Upload to S3
+        uses: actions/upload-artifact@v2
+        id: S3
+        with:
+          aws_key_id: ${{secrets.AWS_KEY_ID}}
+          aws_secret_access_key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+          aws_bucket: ${{secrets.AWS_BUCKET}}
+          source_dir: _site

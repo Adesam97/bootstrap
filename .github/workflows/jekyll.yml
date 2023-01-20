@@ -40,7 +40,7 @@ jobs:
           cache-version: 0 # Increment this number if you need to re-download cached gems
         env:
          ImageOS: ubuntu22.04.1 LTS
-      - run: bundle exec
+#      - run: bundle exec rake
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v2
